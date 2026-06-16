@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AmbulEEG Firmware Flasher</title>
+  <script
+    type="module"
+    src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module">
+  </script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto;
+           padding: 0 1rem; line-height: 1.5; color: #1a1a1a; }
+    h1 { font-size: 1.6rem; }
+    .card { background: #f5f5f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+    ol { padding-left: 1.2rem; }
+    code { background: #e6e6eb; padding: 0.1em 0.35em; border-radius: 4px; }
+    .note { color: #555; font-size: 0.9rem; }
+    esp-web-install-button { display: block; margin: 1.5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>AmbulEEG Firmware Flasher</h1>
+  <p>Flash the latest AmbulEEG firmware to your board straight from this page —
+     no software to install.</p>
+
+  <div class="card">
+    <strong>How to flash</strong>
+    <ol>
+      <li>Use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on a desktop/laptop.</li>
+      <li>Plug the AmbulEEG board into a USB port with a data cable.</li>
+      <li>Click <strong>Install</strong> below and select the board's serial port.</li>
+      <li>Wait for it to finish — do not unplug until it says complete.</li>
+    </ol>
+  </div>
+
+  <esp-web-install-button manifest="manifest.json">
+    <button slot="activate">Install AmbulEEG Firmware</button>
+    <span slot="unsupported">Your browser is not supported. Please use Chrome or Edge on a computer.</span>
+    <span slot="not-allowed">Web Serial access was not allowed. Please reload and try again.</span>
+  </esp-web-install-button>
+
+  <p class="note">
+    If nothing happens when you plug in, the board may need to be put in download mode:
+    hold the <strong>BOOT</strong> button, tap <strong>RESET</strong>, then release BOOT, and click Install again.
+  </p>
+  <p class="note">Firmware: ESP32-S3 &middot; AmbulEEG <code>main</code></p>
+</body>
+</html>
