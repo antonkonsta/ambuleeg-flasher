@@ -9,14 +9,30 @@
     src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module">
   </script>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto;
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 3rem auto;
            padding: 0 1rem; line-height: 1.5; color: #1a1a1a; }
     h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.15rem; margin-top: 0; }
     .card { background: #f5f5f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
     ol { padding-left: 1.2rem; }
+    li { margin: 0.35rem 0; }
     code { background: #e6e6eb; padding: 0.1em 0.35em; border-radius: 4px; }
     .note { color: #555; font-size: 0.9rem; }
     esp-web-install-button { display: block; margin: 1.5rem 0; }
+
+    /* Required-step callout */
+    .required { background: #fff4e5; border: 2px solid #ff9800;
+                border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+    .required h2 { color: #b35900; }
+    .badge { display: inline-block; background: #ff9800; color: #fff; font-weight: 700;
+             font-size: 0.75rem; letter-spacing: 0.04em; padding: 0.2em 0.6em;
+             border-radius: 999px; margin-bottom: 0.6rem; }
+    .seq { font-weight: 700; }
+    .boot  { color: #1a1a1a; background: #ffe08a; padding: 0.05em 0.4em; border-radius: 4px; }
+    .reset { color: #fff;    background: #d32f2f; padding: 0.05em 0.4em; border-radius: 4px; }
+    .required img { display: block; width: 100%; max-width: 460px; margin: 1rem auto 0.25rem;
+                    border-radius: 10px; border: 1px solid #e0c08a; }
+    figcaption { text-align: center; color: #8a6d3b; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -25,13 +41,32 @@
      no software to install.</p>
 
   <div class="card">
-    <strong>How to flash</strong>
+    <h2>How to flash</h2>
     <ol>
       <li>Use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on a desktop/laptop.</li>
-      <li>Plug the AmbulEEG board into a USB port with a data cable.</li>
-      <li>Click <strong>Install</strong> below and select the board's serial port.</li>
-      <li>Wait for it to finish — do not unplug until it says complete.</li>
+      <li>Plug the AmbulEEG board into a USB port with a <strong>data</strong> cable.</li>
+      <li><strong>Put the board into flashing mode</strong> — see the required step below. <em>This is mandatory.</em></li>
+      <li>Click <strong>Install</strong>, then select the board's serial port.</li>
+      <li>Wait for it to finish — <strong>do not unplug</strong> until it says complete.</li>
     </ol>
+  </div>
+
+  <div class="required">
+    <span class="badge">REQUIRED — DO THIS FIRST</span>
+    <h2>You MUST put the board into flashing (download) mode</h2>
+    <p>The board will <strong>not</strong> flash unless it is in download mode. If you skip this,
+       the installer just spins on <em>“Connecting…”</em> forever. Before clicking Install, do this
+       button sequence on the board:</p>
+    <ol>
+      <li>Press and <span class="seq">HOLD</span> the <span class="boot">BOOT</span> button (don't let go yet).</li>
+      <li>While still holding BOOT, <span class="seq">press and release</span> the <span class="reset">RESET</span> button.</li>
+      <li>Now <span class="seq">release</span> the <span class="boot">BOOT</span> button.</li>
+      <li>The board is now in flashing mode — click <strong>Install</strong> below right away.</li>
+    </ol>
+    <figure>
+      <img src="bootreset.png" alt="AmbulEEG board showing the BOOT button (top) and RESET button (middle)" />
+      <figcaption>BOOT (top, SW2) and RESET (middle, S1) buttons on the AmbulEEG board.</figcaption>
+    </figure>
   </div>
 
   <esp-web-install-button manifest="manifest.json">
@@ -41,8 +76,9 @@
   </esp-web-install-button>
 
   <p class="note">
-    If nothing happens when you plug in, the board may need to be put in download mode:
-    hold the <strong>BOOT</strong> button, tap <strong>RESET</strong>, then release BOOT, and click Install again.
+    Still stuck on “Connecting…”? Repeat the <span class="boot">BOOT</span> + <span class="reset">RESET</span>
+    sequence above, then click Install again. Make sure no other program (e.g. a serial monitor or IDE)
+    has the port open.
   </p>
   <p class="note">Firmware: ESP32-S3 &middot; AmbulEEG <code>main</code></p>
 </body>
