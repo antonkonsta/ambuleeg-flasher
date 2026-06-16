@@ -82,13 +82,28 @@
     <p>After you click <strong>Install</strong>, your browser asks which device to connect to. In that pop-up:</p>
     <ol>
       <li><strong>Click the port</strong> — it appears as <code>USB JTAG/serial debug unit (COM…)</code>
-          (the COM number will vary).</li>
+          or <code>Silicon Labs CP210x USB to UART Bridge (COM…)</code> (the COM number will vary).</li>
       <li>Click <strong>Connect</strong>.</li>
     </ol>
     <figure>
       <img src="serialport.png" alt="Browser serial port picker: select the USB JTAG/serial debug unit, then click Connect" />
       <figcaption>1) Select the USB JTAG/serial debug unit, then 2) click Connect.</figcaption>
     </figure>
+  </div>
+
+  <div class="card">
+    <h2>No port showing up? Install the USB driver</h2>
+    <p>If the pop-up is empty or the board never appears as a COM port, you likely need the
+       <strong>Silicon Labs CP210x VCP driver</strong>. This board uses a
+       <strong>CP2102N</strong> USB-to-UART bridge — it's the only driver you should ever need.</p>
+    <ol>
+      <li>Download the driver:
+        <a href="https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers" target="_blank" rel="noopener">
+          Silicon Labs CP210x VCP Drivers</a>.</li>
+      <li>Install it, then unplug and replug the board.</li>
+      <li>Reload this page and click <strong>Install</strong> again.</li>
+    </ol>
+    <p class="note">Windows 10/11 often install this automatically. macOS usually needs no driver.</p>
   </div>
 
   <p class="note">
