@@ -162,10 +162,13 @@
   <!-- Check an already-flashed board's firmware version -->
   <div class="step">
     <h2>Already flashed? Check a board's firmware version</h2>
-    <p>Plug in a board that already has firmware (it does <em>not</em> need to be in flashing mode),
-       then click below. The page asks the board what version it's running and tells you whether
-       it's current. Use Chrome/Edge, and make sure no other program (e.g. the Python viewer) has
-       the port open. Pick the same port the viewer uses —
+    <p><strong>The board must be in normal running mode — NOT flashing/download mode</strong>
+       (the opposite of Step 2). This talks to the running firmware, so do <em>not</em> do the
+       BOOT+RESET sequence here. If you just flashed it, unplug/replug or press RESET so it boots
+       normally, then click below.</p>
+    <p>Plug the board in, then click below. The page asks the board what version it's running and
+       tells you whether it's current. Use Chrome/Edge, and make sure no other program (e.g. the
+       Python viewer) has the port open. Pick the same port the viewer uses —
        <code>USB JTAG/serial debug unit (COM…)</code>.</p>
     <button id="check-version-btn" type="button">Check firmware version</button>
     <div id="fw-check-result" class="note"></div>
