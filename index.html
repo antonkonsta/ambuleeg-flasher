@@ -58,6 +58,16 @@
     #flash-log .log-line.warn  { color: #e3b341; }
     #flash-log .log-line.trace { color: #6e7681; }
     #flash-log.hide-trace .log-line.trace { display: none; }
+
+    /* Firmware version check */
+    #check-version-btn { font-size: 0.95rem; padding: 0.5rem 1rem; border-radius: 8px;
+                         border: 1px solid #1a73e8; background: #1a73e8; color: #fff; cursor: pointer; }
+    #check-version-btn:hover { background: #1761c2; }
+    #fw-check-result { margin-top: 0.75rem; }
+    #fw-check-result.ok       { color: #1b7f30; font-weight: 600; }
+    #fw-check-result.outdated { color: #b35900; font-weight: 600; }
+    #fw-check-result.legacy,
+    #fw-check-result.err      { color: #c1121f; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -149,7 +159,129 @@
        <span class="note">(Windows 10/11 often install it automatically; macOS usually needs no driver.)</span></p>
   </div>
 
+  <!-- Check an already-flashed board's firmware version -->
+  <div class="step">
+    <h2>Already flashed? Check a board's firmware version</h2>
+    <p>Plug in a board that already has firmware (it does <em>not</em> need to be in flashing mode),
+       then click below. The page asks the board what version it's running and tells you whether
+       it's current. Use Chrome/Edge, and make sure no other program (e.g. the Python viewer) has
+       the port open. Pick the same port the viewer uses —
+       <code>USB JTAG/serial debug unit (COM…)</code>.</p>
+    <button id="check-version-btn" type="button">Check firmware version</button>
+    <div id="fw-check-result" class="note"></div>
+  </div>
+
   <p class="note">Firmware: ESP32-S3 &middot; AmbulEEG <code>main</code></p>
+
+  <script>
+    // Read the version from a board already running firmware, over Web Serial, using the
+    // same NEEG-ACQUISITION command protocol the Python viewer uses (EEG_CMD_GET_VERSION = 8).
+    (function () {
+      // Newest firmware semver. BUMP IN LOCKSTEP with the firmware (version.h FIRMWARE_SEMVER)
+      // and the Python app (EEGCommand.EXPECTED_FIRMWARE_VERSION) every release.
+      var EXPECTED_FIRMWARE_VERSION = "1.0.0";
+
+      var HEADER = "NEEG-ACQUISITION";
+      var btn = document.getElementById("check-version-btn");
+      var out = document.getElementById("fw-check-result");
+      if (!btn || !out) return;
+
+      function setResult(cls, msg) { out.className = "note " + cls; out.textContent = msg; }
+
+      function buildGetVersionPacket() {
+        var buf = new Uint8Array(32);
+        var dv = new DataView(buf.buffer);
+        for (var i = 0; i < 16; i++) buf[i] = HEADER.charCodeAt(i);
+        dv.setUint32(16, 32, false);          // packet_len (big-endian)
+        dv.setUint32(20, 1, false);           // packet_type = COMMAND
+        dv.setUint32(24, 8, false);           // command_number = GET_VERSION
+        dv.setUint32(28, 0x0F0F0F0F, false);  // terminator
+        return buf;
+      }
+
+      // Scan accumulated bytes for a COMMAND packet (type 1) with command 8; return its version.
+      function findVersion(bytes) {
+        for (var i = 0; i + 16 <= bytes.length; i++) {
+          var match = true;
+          for (var j = 0; j < 16; j++) { if (bytes[i + j] !== HEADER.charCodeAt(j)) { match = false; break; } }
+          if (!match) continue;
+          if (i + 28 > bytes.length) return null; // header found, wait for more
+          var dv = new DataView(bytes.buffer, bytes.byteOffset + i);
+          var len = dv.getUint32(16, false);
+          if (len < 32 || len > 4096) { continue; } // implausible; keep scanning
+          if (i + len > bytes.length) return null;   // wait for the full packet
+          if (dv.getUint32(20, false) === 1 && dv.getUint32(24, false) === 8) {
+            var vbytes = bytes.slice(i + 28, i + 28 + 32);
+            var end = vbytes.indexOf(0); if (end < 0) end = vbytes.length;
+            return new TextDecoder().decode(vbytes.slice(0, end));
+          }
+          i += len - 1; // skip this (non-matching) packet
+        }
+        return null;
+      }
+
+      async function check() {
+        if (!("serial" in navigator)) {
+          setResult("err", "This browser doesn't support Web Serial. Use Chrome or Edge on a computer.");
+          return;
+        }
+        var port, reader, writer;
+        setResult("", "Select the board's port…");
+        try {
+          port = await navigator.serial.requestPort();
+          await port.open({ baudRate: 115200 });
+        } catch (e) {
+          setResult("err", "No port selected, or it couldn't be opened.");
+          return;
+        }
+        try {
+          writer = port.writable.getWriter();
+          await writer.write(buildGetVersionPacket());
+          writer.releaseLock();
+
+          setResult("", "Asking the board for its version…");
+          reader = port.readable.getReader();
+          var acc = new Uint8Array(0), version = null, start = Date.now(), timeoutMs = 2500;
+          while (Date.now() - start < timeoutMs) {
+            var remaining = timeoutMs - (Date.now() - start);
+            var res = await Promise.race([
+              reader.read(),
+              new Promise(function (r) { setTimeout(function () { r({ timeout: true }); }, remaining); })
+            ]);
+            if (res.timeout || res.done) break;
+            if (res.value && res.value.length) {
+              var merged = new Uint8Array(acc.length + res.value.length);
+              merged.set(acc); merged.set(res.value, acc.length);
+              acc = merged;
+              version = findVersion(acc);
+              if (version !== null) break;
+            }
+          }
+
+          if (version === null) {
+            setResult("legacy", "No version reported — this is LEGACY firmware (predates version reporting). "
+              + "Please re-flash with the latest (newest is " + EXPECTED_FIRMWARE_VERSION + ").");
+          } else {
+            var semver = version.split("+")[0].trim();
+            if (semver === EXPECTED_FIRMWARE_VERSION) {
+              setResult("ok", "Up to date — board is running " + version + " (newest).");
+            } else {
+              setResult("outdated", "OUTDATED — board is running " + version
+                + ", newest is " + EXPECTED_FIRMWARE_VERSION + ". Please re-flash.");
+            }
+          }
+        } catch (e) {
+          setResult("err", "Error talking to the board: " + e.message
+            + ". Make sure no other app (e.g. the Python viewer) has the port open.");
+        } finally {
+          try { if (reader) { await reader.cancel(); reader.releaseLock(); } } catch (e) {}
+          try { await port.close(); } catch (e) {}
+        }
+      }
+
+      btn.addEventListener("click", check);
+    })();
+  </script>
 
   <script>
     // Mirror the browser console into the on-page "Flashing log" so users see the

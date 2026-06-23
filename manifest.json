@@ -1,6 +1,6 @@
 {
   "name": "AmbulEEG Firmware",
-  "version": "main + ADC defaults + boot-reliability",
+  "version": "1.0.0",
   "new_install_prompt_erase": false,
   "builds": [
     {
